@@ -1,6 +1,6 @@
 
 from .losses import AgeLoss
-from .verification import FGNetVerification, CelebAVerification, RAFVerification, LAPVerification
+
 from .task_name import ANALYSIS_TASKS
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.data import Mixup

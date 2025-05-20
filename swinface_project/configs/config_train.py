@@ -9,7 +9,7 @@ config = edict()
 config.val_targets = ['lfw', 'cfp_fp', "agedb_30", 'calfw', 'cplfw']
 
 # Recognition data
-config.rec = "<your path>/data/faces_emore/"  #### Path for the training dataset
+config.rec = "/d9lab/tulei/SwinFace/data/faces_emore/"  #### Path for the training dataset
 config.num_classes = 85742
 config.num_image = 5822653
 

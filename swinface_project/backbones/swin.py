@@ -149,7 +149,7 @@ class WindowAttention(nn.Module):
         flops = 0
         # qkv = self.qkv(x)
         flops += N * self.dim * 3 * self.dim
-        # attn = (q @ k.transpose(-2, -1))
+        # attn = (q.to(torch.float32) @ k.transpose(-2, -1).to(torch.float32))
         flops += self.num_heads * N * (self.dim // self.num_heads) * N
         #  x = (attn @ v)
         flops += self.num_heads * N * N * (self.dim // self.num_heads)

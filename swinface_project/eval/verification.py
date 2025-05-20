@@ -148,8 +148,23 @@ def calculate_val(thresholds,
             _, far_train[threshold_idx] = calculate_val_far(
                 threshold, dist[train_set], actual_issame[train_set])
         if np.max(far_train) >= far_target:
-            f = interpolate.interp1d(far_train, thresholds, kind='slinear')
-            threshold = f(far_target)
+            # Handle duplicate values in far_train before interpolation
+            unique_far, unique_indices = np.unique(far_train, return_index=True)
+            # Sort unique_far and corresponding thresholds
+            sorted_indices = np.argsort(unique_far)
+            sorted_unique_far = unique_far[sorted_indices]
+            sorted_thresholds = thresholds[unique_indices][sorted_indices]
+            
+            # Ensure there are at least two unique points for interpolation
+            if len(sorted_unique_far) > 1:
+                f = interpolate.interp1d(sorted_unique_far, sorted_thresholds, kind='slinear')
+                threshold = f(far_target)
+            else:
+                # If only one unique point, use that threshold if it meets the target
+                if sorted_unique_far[0] >= far_target:
+                    threshold = sorted_thresholds[0]
+                else:
+                    threshold = 0.0
         else:
             threshold = 0.0
 
@@ -239,9 +254,10 @@ def test(data_set, backbone, batch_size, nfolds=10):
             count = bb - ba
             _data = data[bb - batch_size: bb]
             time0 = datetime.datetime.now()
-            img = ((_data / 255) - 0.5) / 0.5
+            img = (((_data / 255) - 0.5) / 0.5).cuda()
             net_out: torch.Tensor = backbone(img)
-            _embeddings = net_out.detach().cpu().numpy()
+            # Extract the embedding tensor from the tuple output
+            _embeddings = net_out[2].detach().cpu().numpy()
             time_now = datetime.datetime.now()
             diff = time_now - time0
             time_consumed += diff.total_seconds()
