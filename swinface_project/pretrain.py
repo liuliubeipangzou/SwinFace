@@ -39,6 +39,7 @@ except KeyError:
     )
 
 
+
 def main(args):
     # get config
     cfg = get_config(args.config)
@@ -60,7 +61,7 @@ def main(args):
     train_loader = get_dataloader(
         cfg.rec,
         args.local_rank,
-        cfg.batch_size,
+        cfg.recognition_bz,
         cfg.dali,
         cfg.seed,
         cfg.num_workers
@@ -69,23 +70,18 @@ def main(args):
     backbone = get_model(
         cfg.network, dropout=0.0, fp16=cfg.fp16, num_features=cfg.embedding_size).cuda()
 
-    backbone = torch.nn.parallel.DistributedDataParallel(
-        module=backbone, broadcast_buffers=False, device_ids=[args.local_rank], bucket_cap_mb=16,
-        find_unused_parameters=True)
+    # backbone = torch.nn.parallel.DistributedDataParallel(
+    #     module=backbone, broadcast_buffers=False, device_ids=[args.local_rank], bucket_cap_mb=16,
+    #     find_unused_parameters=True) # Commented out for single GPU
     backbone.train()
     # FIXME using gradient checkpoint if there are some unused parameters will cause error
-    backbone._set_static_graph()
+    # backbone._set_static_graph() # Commented out as it might not be needed without DDP
 
-    cfg.total_recognition_bz = cfg.recognition_bz * world_size
+    cfg.total_recognition_bz = cfg.recognition_bz * world_size # world_size is 1 for single GPU
     cfg.warmup_step = cfg.num_image // cfg.total_recognition_bz * cfg.warmup_epoch
     cfg.total_step = cfg.num_image // cfg.total_recognition_bz * cfg.num_epoch
 
-    cfg.total_batch_size = world_size * cfg.recognition_bz
-
-    cfg.lr = cfg.lr * cfg.total_batch_size / 512.0
-    cfg.warmup_lr = cfg.warmup_lr * cfg.total_batch_size / 512.0
-    cfg.min_lr = cfg.min_lr * cfg.total_batch_size / 512.0
-
+    
     # Recognition loss
     margin_loss = CombinedMarginLoss(
         64,
@@ -156,7 +152,7 @@ def main(args):
     callback_logging = CallBackLogging(
         frequent=cfg.frequent,
         total_step=cfg.total_step,
-        batch_size=cfg.batch_size,
+        batch_size=cfg.recognition_bz,
         start_step=global_step,
         writer=summary_writer
     )
@@ -179,7 +175,7 @@ def main(args):
 
             img = img.cuda(non_blocking=True)
 
-            local_embeddings = backbone(img)
+            local_embeddings = backbone(img)[2]
 
             recognition_loss = module_partial_fc(local_embeddings, recognition_label, opt)
 
@@ -202,7 +198,8 @@ def main(args):
             with torch.no_grad():
                 loss_am.update(loss.item(), 1)
                 callback_logging(global_step, loss_am, epoch, cfg.fp16,
-                                     lr_scheduler.get_update_values(global_step - 1)[0], amp)
+                                     opt.param_groups[0]['lr'], amp)
+                logging.info(f"Epoch: {epoch}, Step: {global_step}, LR: {opt.param_groups[0]['lr']}") # Add this line
 
                 if global_step % cfg.verbose == 0 and global_step > 0:
                     callback_verification(global_step, backbone)
@@ -217,7 +214,7 @@ def main(args):
             }
             torch.save(checkpoint, os.path.join(cfg.output, f"checkpoint_epoch_{epoch}_gpu_{rank}.pt"))
 
-        if rank == 0:
+        if rank == 0: # rank is 0 for single GPU # rank is 0 for single GPU
             path_module = os.path.join(cfg.output, "model.pt")
             torch.save(backbone.module.state_dict(), path_module)
 
@@ -234,7 +231,7 @@ def main(args):
         from torch2onnx import convert_onnx
         convert_onnx(backbone.module.cpu().eval(), path_module, os.path.join(cfg.output, "model.onnx"))
 
-    distributed.destroy_process_group()
+    # distributed.destroy_process_group() # Commented out for single GPU
 
 
 if __name__ == "__main__":

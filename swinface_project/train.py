@@ -242,7 +242,7 @@ def main(args):
                 callback_logging(global_step, loss_am, None, analysis_loss_ams, epoch, cfg.fp16,
                                  lr_scheduler.get_update_values(global_step)[0], amp)
 
-                if (global_step+1) % cfg.verbose == 0:
+                if (global_step+1) % cfg.verbose == 0: # rank is 0 for single GPU
                     model.module.set_output_type("Attribute")
                     attribute_verification(global_step, model, model.module.fam, model.module.tss, model.module.om, model.module.om, model.module.om)
 
