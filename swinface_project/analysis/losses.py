@@ -20,3 +20,33 @@ class AgeLoss(nn.Module):
         loss = torch.mean(loss)
 
         return loss
+
+class HeightLoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.mse = nn.MSELoss()
+
+    def forward(self, output, label):
+        output = output.to(torch.float32)
+        label = label.to(torch.float32)
+        return self.mse(output, label)
+
+class WeightLoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.mse = nn.MSELoss()
+
+    def forward(self, output, label):
+        output = output.to(torch.float32)
+        label = label.to(torch.float32)
+        return self.mse(output, label)
+
+class BMILoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.mse = nn.MSELoss()
+
+    def forward(self, output, label):
+        output = output.to(torch.float32)
+        label = label.to(torch.float32)
+        return self.mse(output, label)

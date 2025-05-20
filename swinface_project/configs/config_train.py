@@ -14,36 +14,21 @@ config.num_classes = 85742
 config.num_image = 5822653
 
 # Analysis data
-config.age_gender_data_path = "<your path>/data/AIO_train"
-config.age_gender_data_list = ["IMDB", "WIKI", "Adience", "MORPH"]
+# Analysis data
+config.UTKFace_train_data = "<your path>/data/UTKFace/train/data"
+config.UTKFace_train_label = "<your path>/data/UTKFace/train/label.txt"
+config.UTKFace_val_data = "<your path>/data/UTKFace/val/data"
+config.UTKFace_val_label = "<your path>/data/UTKFace/val/label.txt"
 
-config.CelebA_train_data = "<your path>/data/CelebA/data"
-config.CelebA_train_label = "<your path>/data/AIO_train/CelebA/label.txt"
-config.CelebA_val_data = "<your path>/data/CelebA/data"
-config.CelebA_val_label = "<your path>/data/AIO_val/CelebA/label.txt"
-config.CelebA_test_data = "<your path>/data/CelebA/data"
-config.CelebA_test_label = "<your path>/data/AIO_test/CelebA/label.txt"
+config.JyFace_train_data = "<your path>/data/JyFace/train/data"
+config.JyFace_train_label = "<your path>/data/JyFace/train/label.txt"
+config.JyFace_val_data = "<your path>/data/JyFace/val/data"
+config.JyFace_val_label = "<your path>/data/JyFace/val/label.txt"
 
-config.FGnet_data = "<your path>/data/AIO_val/FGnet/data"
-config.FGnet_label = "<your path>/data/AIO_val/FGnet/label.txt"
-
-config.RAF_data = "<your path>/data/RAF"
-config.RAF_label = "<your path>/data/RAF_/basic/list_patition_label.txt"
-
-config.AffectNet_data = "<your path>/data/AffectNet/data"
-config.AffectNet_label = "<your path>/data/AffectNet/label.txt"
-
-config.LAP_train_data = "<your path>/data/AIO_test/LAP_finetuning/data"
-config.LAP_train_label = "<your path>/data/AIO_test/LAP_finetuning/label.csv"
-config.LAP_test_data = "<your path>/data/AIO_test/LAP_test/data"
-config.LAP_test_label = "<your path>/data/AIO_test/LAP_test/label.csv"
-
-config.CLAP_train_data = "<your path>/data/AIO_test/LAP_finetuning/data"
-config.CLAP_train_label = "<your path>/data/AIO_test/LAP_finetuning/label.csv"
-config.CLAP_val_data = "<your path>/data/AIO_test/LAP_test/data"
-config.CLAP_val_label = "<your path>/data/AIO_test/LAP_test/label.csv"
-config.CLAP_test_data = "<your path>/data/LAP_test/test"
-config.CLAP_test_label = "<your path>/data/LAP_test/test.csv"
+config.MyFace_train_data = "<your path>/data/MyFace/train/data"
+config.MyFace_train_label = "<your path>/data/MyFace/train/label.txt"
+config.MyFace_val_data = "<your path>/data/MyFace/val/data"
+config.MyFace_val_label = "<your path>/data/MyFace/val/label.txt"
 
 # Data loading settings
 config.img_size = 112
@@ -150,7 +135,7 @@ config.interclass_filtering_threshold = 0 # Partial FC
 
 # Loss weight
 config.recognition_loss_weight = 1.0
-config.analysis_loss_weights = [1.0 for j in range(42)]
+config.analysis_loss_weights = [1.0 for j in range(5)] # Gender, Age, Height, Weight, BMI
 
 # Others
 config.fp16 = True

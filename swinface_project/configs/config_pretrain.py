@@ -14,8 +14,19 @@ config.num_classes = 85742
 config.num_image = 5822653
 
 # Data loading settings
-config.batch_size = 128
+config.recognition_bz = 128
+config.attribute_bz = 32
 config.num_workers = 8
+
+# Analysis loss weights
+config.recognition_loss_weight = 1.0
+config.analysis_loss_weights = [
+    1.0,  # Gender
+    1.0,  # Age
+    1.0,  # Height
+    1.0,  # Weight
+    1.0,  # BMI
+]
 
 # -----------------------------------------------------------------------------
 # Model settings

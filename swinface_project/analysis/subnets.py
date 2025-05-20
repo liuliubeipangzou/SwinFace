@@ -163,8 +163,8 @@ class FeatureAttentionNet(torch.nn.Module):
 
 
 class FeatureAttentionModule(torch.nn.Module):
-    def __init__(self, branch_num=11, in_chans=2112, feature_dim=512, conv_shared=False, conv_mode="split", kernel_size=3,
-                 channel_attention="CBAM", spatial_attention=None, la_num_list=[2 for j in range(11)], pooling="max"):
+    def __init__(self, branch_num=5, in_chans=2112, feature_dim=512, conv_shared=False, conv_mode="split", kernel_size=3,
+                 channel_attention="CBAM", spatial_attention=None, la_num_list=[2 for j in range(5)], pooling="max"):
         super().__init__()
 
 
@@ -224,7 +224,7 @@ class TaskSpecificSubnet(torch.nn.Module):
         return self.feature(x)
 
 class TaskSpecificSubnets(torch.nn.Module):
-    def __init__(self, branch_num=11):
+    def __init__(self, branch_num=5):
         super().__init__()
 
         self.branch_num = branch_num
@@ -258,17 +258,11 @@ class TaskSpecificSubnets(torch.nn.Module):
 class OutputModule(torch.nn.Module):
     def __init__(self, feature_dim=512, output_type="Dict"):
         super().__init__()
-        self.output_sizes = [[2],
-                             [1, 2],
-                             [7, 2],
-                             [2 for j in range(6)],
-                             [2 for j in range(10)],
-                             [2 for j in range(5)],
-                             [2, 2],
-                             [2 for j in range(4)],
-                             [2 for j in range(6)],
-                             [2, 2],
-                             [2, 2]]
+        self.output_sizes = [[2],  # Gender
+                             [1],  # Age
+                             [1],  # Height
+                             [1],  # Weight
+                             [1]]  # BMI
 
         self.output_fcs = nn.ModuleList()
         for i in range(0, len(self.output_sizes)):
@@ -276,16 +270,7 @@ class OutputModule(torch.nn.Module):
                 output_fc = nn.Linear(feature_dim, self.output_sizes[i][j])
                 self.output_fcs.append(output_fc)
 
-        self.task_names = [
-            'Age', 'Attractive', 'Blurry', 'Chubby', 'Heavy Makeup', 'Gender', 'Oval Face', 'Pale Skin',
-            'Smiling', 'Young',
-            'Bald', 'Bangs', 'Black Hair', 'Blond Hair', 'Brown Hair', 'Gray Hair', 'Receding Hairline',
-            'Straight Hair', 'Wavy Hair', 'Wearing Hat',
-            'Arched Eyebrows', 'Bags Under Eyes', 'Bushy Eyebrows', 'Eyeglasses', 'Narrow Eyes', 'Big Nose',
-            'Pointy Nose', 'High Cheekbones', 'Rosy Cheeks', 'Wearing Earrings',
-            'Sideburns', r"Five O'Clock Shadow", 'Big Lips', 'Mouth Slightly Open', 'Mustache',
-            'Wearing Lipstick', 'No Beard', 'Double Chin', 'Goatee', 'Wearing Necklace',
-            'Wearing Necktie', 'Expression', 'Recognition']  # Total:43
+        self.task_names = ['Gender', 'Age', 'Height', 'Weight', 'BMI', 'Recognition']  # Total:6
 
         self.output_type = output_type
 
@@ -315,32 +300,14 @@ class OutputModule(torch.nn.Module):
                 outputs.append(output)
                 k += 1
 
-        [gender,
-         age, young,
-         expression, smiling,
-         attractive, blurry, chubby, heavy_makeup, oval_face, pale_skin,
-         bald, bangs, black_hair, blond_hair, brown_hair, gray_hair, receding_hairline, straight_hair, wavy_hair,
-         wearing_hat,
-         arched_eyebrows, bags_under_eyes, bushy_eyebrows, eyeglasses, narrow_eyes,
-         big_nose, pointy_nose,
-         high_cheekbones, rosy_cheeks, wearing_earrings, sideburns,
-         five_o_clock_shadow, big_lips, mouth_slightly_open, mustache, wearing_lipstick, no_beard,
-         double_chin, goatee,
-         wearing_necklace, wearing_necktie] = outputs
+        [gender, age, height, weight, bmi] = outputs
 
-        outputs = [age, attractive, blurry, chubby, heavy_makeup, gender, oval_face, pale_skin, smiling, young,
-                   bald, bangs, black_hair, blond_hair, brown_hair, gray_hair, receding_hairline,
-                   straight_hair, wavy_hair, wearing_hat,
-                   arched_eyebrows, bags_under_eyes, bushy_eyebrows, eyeglasses, narrow_eyes, big_nose,
-                   pointy_nose, high_cheekbones, rosy_cheeks, wearing_earrings,
-                   sideburns, five_o_clock_shadow, big_lips, mouth_slightly_open, mustache,
-                   wearing_lipstick, no_beard, double_chin, goatee, wearing_necklace,
-                   wearing_necktie, expression]  # Total:42
+        outputs = [gender, age, height, weight, bmi]  # Total:5
 
         outputs.append(embedding)
 
         result = dict()
-        for j in range(43):
+        for j in range(len(self.task_names)):
             result[self.task_names[j]] = outputs[j]
 
         if self.output_type == "Dict":

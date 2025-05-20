@@ -537,3 +537,136 @@ class LAPDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.image_names)
+
+class UTKFaceDataset(torch.utils.data.Dataset):
+    def __init__(self, config, choose="", transform=None):
+        if choose == "train":
+            self.data_path = config.UTKFace_train_data
+            self.label_path = config.UTKFace_train_label
+        elif choose == "val":
+            self.data_path = config.UTKFace_val_data
+            self.label_path = config.UTKFace_val_label
+
+        self.image_names = []
+        self.labels = []
+
+        if transform:
+            self.transform = transform
+        else:
+            self.transform = transforms.Compose([
+                transforms.Resize([config.img_size, config.img_size]),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+            ])
+
+        with open(self.label_path, "r") as f:
+            data = f.readlines()
+
+        for line in data[1:]:
+            line = line.strip().split()
+            # Assuming format: image_name gender age
+            if len(line) == 3:
+                self.image_names.append(line[0])
+                # Gender is int (0 or 1), age is float
+                label = [int(line[1]), np.asarray([float(line[2])])]
+                self.labels.append(label)
+
+    def __getitem__(self, idx):
+        img_path = os.path.join(self.data_path, self.image_names[idx])
+        img = Image.open(img_path).convert('RGB')
+        img = self.transform(img)
+        img = torch.tensor(np.asarray(img))
+        label = self.labels[idx]
+        return img, label
+
+    def __len__(self):
+        return len(self.image_names)
+
+class JyFaceDataset(torch.utils.data.Dataset):
+    def __init__(self, config, choose="", transform=None):
+        if choose == "train":
+            self.data_path = config.JyFace_train_data
+            self.label_path = config.JyFace_train_label
+        elif choose == "val":
+            self.data_path = config.JyFace_val_data
+            self.label_path = config.JyFace_val_label
+
+        self.image_names = []
+        self.labels = []
+
+        if transform:
+            self.transform = transform
+        else:
+            self.transform = transforms.Compose([
+                transforms.Resize([config.img_size, config.img_size]),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+            ])
+
+        with open(self.label_path, "r") as f:
+            data = f.readlines()
+
+        for line in data[1:]:
+            line = line.strip().split()
+            # Assuming format: image_name height weight bmi
+            if len(line) == 4:
+                self.image_names.append(line[0])
+                # Height, weight, bmi are floats
+                label = [np.asarray([float(line[1])]), np.asarray([float(line[2])]), np.asarray([float(line[3])])]
+                self.labels.append(label)
+
+    def __getitem__(self, idx):
+        img_path = os.path.join(self.data_path, self.image_names[idx])
+        img = Image.open(img_path).convert('RGB')
+        img = self.transform(img)
+        img = torch.tensor(np.asarray(img))
+        label = self.labels[idx]
+        return img, label
+
+    def __len__(self):
+        return len(self.image_names)
+
+class MyFaceDataset(torch.utils.data.Dataset):
+    def __init__(self, config, choose="", transform=None):
+        if choose == "train":
+            self.data_path = config.MyFace_train_data
+            self.label_path = config.MyFace_train_label
+        elif choose == "val":
+            self.data_path = config.MyFace_val_data
+            self.label_path = config.MyFace_val_label
+
+        self.image_names = []
+        self.labels = []
+
+        if transform:
+            self.transform = transform
+        else:
+            self.transform = transforms.Compose([
+                transforms.Resize([config.img_size, config.img_size]),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+            ])
+
+        with open(self.label_path, "r") as f:
+            data = f.readlines()
+
+        # Skip header row and process data lines
+        for line in data[1:]:
+            line = line.strip().split()
+            # Assuming format: image_name gender age height weight bmi
+            if len(line) == 6:
+                self.image_names.append(line[0])
+                # Gender is int (0 or 1), others are floats
+                label = [int(line[1]), np.asarray([float(line[2])]), np.asarray([float(line[3])]), np.asarray([float(line[4])]), np.asarray([float(line[5])])]
+                self.labels.append(label)
+
+    def __getitem__(self, idx):
+        img_path = os.path.join(self.data_path, self.image_names[idx])
+        img = Image.open(img_path).convert('RGB')
+        img = self.transform(img)
+        img = torch.tensor(np.asarray(img))
+        label = self.labels[idx]
+        return img, label
+
+    def __len__(self):
+        return len(self.image_names)

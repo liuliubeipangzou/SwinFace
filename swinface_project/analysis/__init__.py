@@ -23,6 +23,10 @@ from .samplers import SubsetRandomSampler
 from dataset import MXFaceDataset
 
 
+from .datasets import AgeGenderDataset, CelebADataset, RAFDataset, FGnetDataset, ExpressionDataset, LAPDataset, UTKFaceDataset, JyFaceDataset, MyFaceDataset
+from .samplers import SubsetRandomSampler
+from dataset import MXFaceDataset
+
 def get_analysis_train_dataloader(data_choose, config, local_rank) -> Iterable:
 
     if data_choose == "recognition":
@@ -30,15 +34,15 @@ def get_analysis_train_dataloader(data_choose, config, local_rank) -> Iterable:
         root_dir = config.rec
         dataset_train = MXFaceDataset(root_dir=root_dir, local_rank=local_rank)
 
-    if data_choose == "age_gender":
-        batch_size = config.age_gender_bz
+    elif data_choose == "attribute":
+        batch_size = config.attribute_bz
         transform = create_transform(
             input_size=config.img_size,
             scale=config.AUG_SCALE_SCALE if config.AUG_SCALE_SET else None,
             ratio=config.AUG_SCALE_RATIO if config.AUG_SCALE_SET else None,
             is_training=True,
             color_jitter=config.AUG_COLOR_JITTER if config.AUG_COLOR_JITTER > 0 else None,
-            auto_augment=config.AUG_AUTO_AUGMENT if config.AUG_AUTO_AUGMENT != 'none' else None,
+            auto_augment=config.AUG_AUTO_AUGMENT if config.AUG_AUTO_AUGENT != 'none' else None,
             re_prob=config.AUG_REPROB,
             re_mode=config.AUG_REMODE,
             re_count=config.AUG_RECOUNT,
@@ -46,25 +50,11 @@ def get_analysis_train_dataloader(data_choose, config, local_rank) -> Iterable:
             mean=[0.5, 0.5, 0.5],
             std=[0.5, 0.5, 0.5],
         )
-        dataset_train = AgeGenderDataset(config=config, dataset=config.age_gender_data_list, transform=transform)
-
-    elif data_choose == "CelebA":
-        batch_size = config.CelebA_bz
-        transform = create_transform(
-            input_size=config.img_size,
-            scale=config.AUG_SCALE_SCALE if config.AUG_SCALE_SET else None,
-            ratio=config.AUG_SCALE_RATIO if config.AUG_SCALE_SET else None,
-            is_training=True,
-            color_jitter=config.AUG_COLOR_JITTER if config.AUG_COLOR_JITTER > 0 else None,
-            auto_augment=config.AUG_AUTO_AUGMENT if config.AUG_AUTO_AUGMENT != 'none' else None,
-            re_prob=config.AUG_REPROB,
-            re_mode=config.AUG_REMODE,
-            re_count=config.AUG_RECOUNT,
-            interpolation=config.INTERPOLATION,
-            mean=[0.5, 0.5, 0.5],
-            std=[0.5, 0.5, 0.5],
-        )
-        dataset_train = CelebADataset(config=config, choose="train", transform=transform)
+        # Combine UTKFace, JyFace, and MyFace datasets for attribute training
+        utkface_dataset = UTKFaceDataset(config=config, choose="train", transform=transform)
+        jyface_dataset = JyFaceDataset(config=config, choose="train", transform=transform)
+        myface_dataset = MyFaceDataset(config=config, choose="train", transform=transform)
+        dataset_train = torch.utils.data.ConcatDataset([utkface_dataset, jyface_dataset, myface_dataset])
 
     elif data_choose == "expression":
         batch_size = config.expression_bz
@@ -113,7 +103,19 @@ def get_mixup_fn(config):
 
 def get_analysis_val_dataloader(data_choose, config):
 
-    if data_choose == "CelebA":
+    if data_choose == "attribute":
+        transform = transforms.Compose([
+            transforms.Resize([config.img_size, config.img_size]),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+        ])
+        # Combine UTKFace, JyFace, and MyFace datasets for attribute validation
+        utkface_dataset = UTKFaceDataset(config=config, choose="val", transform=transform)
+        jyface_dataset = JyFaceDataset(config=config, choose="val", transform=transform)
+        myface_dataset = MyFaceDataset(config=config, choose="val", transform=transform)
+        dataset_val = torch.utils.data.ConcatDataset([utkface_dataset, jyface_dataset, myface_dataset])
+
+    elif data_choose == "CelebA":
         dataset_val = CelebADataset(config=config, choose="test")
     elif data_choose == "LAP":
         dataset_val = LAPDataset(config=config, choose="test")
